@@ -78,6 +78,8 @@ def run_gf_routing(gf_dir: Path, config: dict | None = None):
 
     pattern_tags = DEFAULT_NUCLEI_TAGS.copy()
     sqlmap_enabled = True
+    route_xss = True
+    route_sqli = True
     if config:
         routing_config = config.get("pattern_routing", {})
         sqlmap_enabled = bool(routing_config.get("sqlmap_enabled", True))
@@ -87,10 +89,22 @@ def run_gf_routing(gf_dir: Path, config: dict | None = None):
                 if isinstance(value, list):
                     pattern_tags[key] = value
 
+        tools_config = config.get("tools", {})
+        enabled_tools = set(tools_config.get("enabled", []) or [])
+        run_tools = tools_config.get("run", {}) if isinstance(tools_config.get("run", {}), dict) else {}
+
+        def _tool_active(name: str) -> bool:
+            if name in enabled_tools:
+                return bool(run_tools.get(name, True))
+            return False
+
+        route_xss = not (_tool_active("dalfox") or _tool_active("nuclei") or _tool_active("nuclei_focused"))
+        route_sqli = not (_tool_active("sqlmap") or _tool_active("nuclei") or _tool_active("nuclei_focused"))
+
     routed_patterns: list[str] = []
 
     xss_file = gf_dir / "xss.txt"
-    if xss_file.exists() and xss_file.stat().st_size > 0:
+    if route_xss and xss_file.exists() and xss_file.stat().st_size > 0:
         print("[+] Routing XSS matches to nuclei...")
         xss_nuclei_file = routed_dir / "xss_nuclei_results.txt"
         _run_nuclei(xss_file, xss_nuclei_file, pattern_tags.get("xss", ["xss", "cve"]))
@@ -98,7 +112,7 @@ def run_gf_routing(gf_dir: Path, config: dict | None = None):
         print("[+] XSS pattern also handled by Dalfox plugin.")
 
     sqli_file = gf_dir / "sqli.txt"
-    if sqli_file.exists() and sqli_file.stat().st_size > 0:
+    if route_sqli and sqli_file.exists() and sqli_file.stat().st_size > 0:
         if sqlmap_enabled:
             print("[+] Routing SQLi matches to sqlmap and nuclei (parallel)...")
         else:
