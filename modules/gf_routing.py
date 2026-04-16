@@ -30,7 +30,7 @@ def _run_nuclei(input_file: Path, output_file: Path, tags: list[str] | None = No
         output_file.touch(exist_ok=True)
         return False
 
-    cmd = [nuclei_bin, "-l", str(input_file), "-silent", "-o", str(output_file)]
+    cmd = [nuclei_bin, "-l", str(input_file), "-silent", "-o", str(output_file), "-s", "low,medium,high"]
     if tags:
         tag_value = ",".join(tag.strip() for tag in tags if tag.strip())
         if tag_value:
@@ -80,6 +80,7 @@ def run_gf_routing(gf_dir: Path, config: dict | None = None):
     sqlmap_enabled = True
     route_xss = True
     route_sqli = True
+    route_nuclei_patterns = True
     if config:
         routing_config = config.get("pattern_routing", {})
         sqlmap_enabled = bool(routing_config.get("sqlmap_enabled", True))
@@ -98,8 +99,10 @@ def run_gf_routing(gf_dir: Path, config: dict | None = None):
                 return bool(run_tools.get(name, True))
             return False
 
-        route_xss = not (_tool_active("dalfox") or _tool_active("nuclei") or _tool_active("nuclei_focused"))
-        route_sqli = not (_tool_active("sqlmap") or _tool_active("nuclei") or _tool_active("nuclei_focused"))
+        nuclei_already_active = _tool_active("nuclei") or _tool_active("nuclei_focused")
+        route_nuclei_patterns = not nuclei_already_active
+        route_xss = not (_tool_active("dalfox") or nuclei_already_active)
+        route_sqli = not (_tool_active("sqlmap") or nuclei_already_active)
 
     routed_patterns: list[str] = []
 
@@ -147,6 +150,8 @@ def run_gf_routing(gf_dir: Path, config: dict | None = None):
             routed_patterns.append("sqli/nuclei")
 
     for pattern in ["ssrf", "redirect", "lfi", "rce", "cors", "urls"]:
+        if not route_nuclei_patterns:
+            continue
         pattern_file = gf_dir / f"{pattern}.txt"
         if not pattern_file.exists() or pattern_file.stat().st_size == 0:
             continue

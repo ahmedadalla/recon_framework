@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from config import RESULTS_DIR
 from core.contracts import Artifact, Phase, RunContext, ToolPlugin, ToolResult
 from core.discord_alert import stream_command_with_alerts
@@ -29,10 +31,9 @@ class DalfoxPlugin(ToolPlugin):
                 if str(record.get("type") or "").upper() != "V":
                     return None
 
-                param = record.get("param") or "unknown-param"
-                severity = str(record.get("severity") or "medium").upper()
-                evidence = record.get("evidence") or record.get("message_str") or "verified Dalfox finding"
-                return f"Dalfox verified finding: {param} ({severity}) - {str(evidence)[:200]}"
+                # Send complete finding context so alerts include URL, payload, CWE, severity, and evidence.
+                pretty = json.dumps(record, ensure_ascii=False, indent=2)
+                return f"Dalfox verified finding:\n```json\n{pretty}\n```"
 
             stream_command_with_alerts(
                 cmd,
