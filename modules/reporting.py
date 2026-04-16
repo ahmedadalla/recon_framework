@@ -15,7 +15,7 @@ except ImportError:
 
 def generate_gemini_summary(raw_findings):
     if not GEMINI_API_KEY or GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE" or not genai:
-        return "AI reporting is currently disabled. Add a Gemini API key to config.py and install the google-genai package to enable this feature."
+        return "AI reporting is currently disabled. Set GEMINI_API_KEY in your environment and install the google-genai package to enable this feature."
 
     try:
         # Initialize the Gemini Client

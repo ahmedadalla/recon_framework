@@ -1,6 +1,7 @@
 import subprocess
 import shutil
 from pathlib import Path
+from urllib.parse import urlparse
 from config import RESULTS_DIR
 from core.discord_alert import send_alert
 
@@ -38,20 +39,46 @@ def run_fuzzing(live_web_file, config: dict | None = None):
         print("[!] ffuf binary not found in PATH. Skipping fuzzing.")
         return fuzzing_dir
     
-    # ffuf doesn't natively take a list of URLs easily without looping, 
-    # but we can use a bash loop to fuzz each live host.
-    ffuf_extra = " ".join(_tool_args(config, "fuzzing"))
-    cmd = f"""
-    while read -r url; do
-        host=$(echo "$url" | awk -F/ '{{print $3}}')
-        [ -z "$host" ] && continue
-        ffuf -u "$url/FUZZ" -w {wordlist} -mc 200,301,403 -ac -s -noninteractive -of json -o {fuzzing_dir}/$host.json {ffuf_extra}
-    done < {live_web_file}
-    """
-    
-    result = subprocess.run(cmd, shell=True, executable='/bin/bash')
-    if result.returncode != 0:
-        print(f"[!] Fuzzing completed with non-zero exit code: {result.returncode}")
+    ffuf_extra = _tool_args(config, "fuzzing")
+    urls = [
+        line.strip()
+        for line in Path(live_web_file).read_text(encoding="utf-8", errors="ignore").splitlines()
+        if line.strip()
+    ]
+    failure_count = 0
+
+    for url in urls:
+        parsed = urlparse(url)
+        host = parsed.netloc
+        if not host:
+            continue
+
+        output_file = fuzzing_dir / f"{host}.json"
+        base_url = url.rstrip("/")
+        cmd = [
+            "ffuf",
+            "-u",
+            f"{base_url}/FUZZ",
+            "-w",
+            str(wordlist),
+            "-mc",
+            "200,301,403",
+            "-ac",
+            "-s",
+            "-noninteractive",
+            "-of",
+            "json",
+            "-o",
+            str(output_file),
+            *ffuf_extra,
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            failure_count += 1
+            print(f"[!] ffuf failed for {url} (exit code {result.returncode})")
+
+    if failure_count:
+        print(f"[!] Fuzzing completed with {failure_count} failed target(s).")
     
     send_alert("Phase Complete: Fuzzing", "Directory fuzzing finished.", 0x9b59b6)
     return fuzzing_dir

@@ -135,7 +135,7 @@
     }
   },
   "fuzzing": {
-    "wordlist": "/home/seclinux/mytools/common.txt"
+    "wordlist": "wordlists/common.txt"
   },
   "nuclei": {
     "focused_tags": ["xss", "sqli", "lfi", "rce", "ssrf", "redirect", "takeover", "exposure", "cve"]

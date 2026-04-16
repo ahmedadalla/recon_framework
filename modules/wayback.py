@@ -40,7 +40,11 @@ def run_wayback_gathering(live_web_file, config: dict | None = None):
     cmd.extend(_tool_args(config, "wayback"))
 
     with open(live_web_file, "r") as input_handle, open(raw_urls_output, "w") as output_handle:
-        subprocess.run(cmd, stdin=input_handle, stdout=output_handle, stderr=subprocess.DEVNULL, text=True)
+        result = subprocess.run(cmd, stdin=input_handle, stdout=output_handle, stderr=subprocess.DEVNULL, text=True)
+    if result.returncode != 0:
+        print(f"[!] {' '.join(cmd[:1])} exited with code: {result.returncode}")
+        raw_urls_output.touch(exist_ok=True)
+        return raw_urls_output
 
     if raw_urls_output.exists():
         count = sum(1 for _ in open(raw_urls_output))

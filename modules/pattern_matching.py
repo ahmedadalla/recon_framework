@@ -43,11 +43,12 @@ def run_gf_patterns(clean_endpoints, config: dict | None = None):
 
     for pattern in patterns:
         output_file = gf_dir / f"{pattern}.txt"
-        
-        # Run GF tool
-        extra = " ".join(_tool_args(config, "gf_patterns"))
-        cmd = f"cat {clean_endpoints} | gf {pattern} {extra} > {output_file}"
-        subprocess.run(cmd, shell=True)
+
+        cmd = ["gf", pattern, *_tool_args(config, "gf_patterns")]
+        with Path(clean_endpoints).open("r", encoding="utf-8", errors="ignore") as input_handle, output_file.open("w", encoding="utf-8") as output_handle:
+            result = subprocess.run(cmd, stdin=input_handle, stdout=output_handle, stderr=subprocess.DEVNULL, text=True)
+        if result.returncode not in (0, 1):
+            print(f"[!] gf {pattern} exited with code: {result.returncode}")
         
         # If the file isn't empty, record it
         if output_file.exists() and output_file.stat().st_size > 0:

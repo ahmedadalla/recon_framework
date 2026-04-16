@@ -53,7 +53,7 @@ def main():
     shutil.rmtree(TEMP_DIR, ignore_errors=True)
     
     print(f"\n[=========== RECON COMPLETE ===========]")
-    for key in ["resolved_subdomains", "live_web_apps", "raw_urls", "clean_endpoints", "gf_patterns_dir", "screenshots_dir", "fuzzing_dir", "vuln_dir", "final_report"]:
+    for key in ["resolved_subdomains", "live_web_apps", "raw_urls", "clean_endpoints", "gf_patterns_dir", "screenshots_dir", "fuzzing_dir", "final_report"]:
         artifact = ctx.artifacts.get(key)
         if artifact:
             print(f"[✓] {key.replace('_', ' ').title()}: {artifact.path}")

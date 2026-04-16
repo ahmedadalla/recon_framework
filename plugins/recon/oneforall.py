@@ -20,10 +20,11 @@ class OneForAllPlugin(ToolPlugin):
         extra = tool_args.get(self.name, []) if isinstance(tool_args, dict) else []
         if isinstance(extra, list):
             cmd.extend(str(item) for item in extra)
-        subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True)
         json_file = TEMP_DIR / f"{ctx.target}.json"
         output = TEMP_DIR / f"{ctx.target}_oneforall.txt"
         subdomains: set[str] = set()
+        parse_error = ""
         if json_file.exists():
             try:
                 with json_file.open("r", encoding="utf-8") as handle:
@@ -32,8 +33,18 @@ class OneForAllPlugin(ToolPlugin):
                     value = entry.get("subdomain")
                     if value:
                         subdomains.add(value)
-            except Exception:
-                pass
+            except Exception as exc:
+                parse_error = str(exc)
         output.write_text("\n".join(sorted(subdomains)) + ("\n" if subdomains else ""), encoding="utf-8")
         artifact = Artifact(key="oneforall_subdomains", path=output)
-        return ToolResult(tool=self.name, phase=self.phase, success=True, artifacts=[artifact], metrics={"count": len(subdomains)})
+        message = result.stderr.strip()
+        if parse_error:
+            message = f"{message}; parse_error={parse_error}" if message else f"parse_error={parse_error}"
+        return ToolResult(
+            tool=self.name,
+            phase=self.phase,
+            success=result.returncode == 0,
+            artifacts=[artifact],
+            metrics={"count": len(subdomains), "returncode": result.returncode},
+            message=message,
+        )

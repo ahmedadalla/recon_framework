@@ -28,6 +28,15 @@ class DnsxFinalPlugin(ToolPlugin):
         extra = tool_args.get(self.name, []) if isinstance(tool_args, dict) else []
         if isinstance(extra, list):
             cmd.extend(str(item) for item in extra)
-        subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if not output.exists():
+            output.touch(exist_ok=True)
         artifact = Artifact(key="resolved_subdomains", path=output)
-        return ToolResult(tool=self.name, phase=self.phase, success=True, artifacts=[artifact], metrics={"input_count": len(merged)})
+        return ToolResult(
+            tool=self.name,
+            phase=self.phase,
+            success=result.returncode == 0,
+            artifacts=[artifact],
+            metrics={"input_count": len(merged), "returncode": result.returncode},
+            message=result.stderr.strip(),
+        )

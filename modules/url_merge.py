@@ -30,9 +30,32 @@ def run_url_merge(raw_urls_file, spider_urls_file, config: dict | None = None):
         clean_urls_output.touch(exist_ok=True)
         return clean_urls_output
 
-    merged = " ".join(str(path) for path in inputs)
-    uro_args = " ".join(_tool_args(config, "url_merge"))
-    subprocess.run(f"cat {merged} | uro {uro_args} > {clean_urls_output}", shell=True)
+    merged_lines: list[str] = []
+    for input_file in inputs:
+        merged_lines.extend(
+            line.strip()
+            for line in input_file.read_text(encoding="utf-8", errors="ignore").splitlines()
+            if line.strip()
+        )
+
+    if not merged_lines:
+        clean_urls_output.touch(exist_ok=True)
+        return clean_urls_output
+
+    cmd = ["uro", *_tool_args(config, "url_merge")]
+    result = subprocess.run(
+        cmd,
+        input="\n".join(merged_lines) + "\n",
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        print(f"[!] uro exited with code: {result.returncode}. Falling back to unique URL merge.")
+        unique_lines = sorted(set(merged_lines))
+        clean_urls_output.write_text("\n".join(unique_lines) + ("\n" if unique_lines else ""), encoding="utf-8")
+    else:
+        clean_urls_output.write_text(result.stdout, encoding="utf-8")
 
     if clean_urls_output.exists():
         count = sum(1 for _ in open(clean_urls_output))

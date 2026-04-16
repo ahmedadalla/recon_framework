@@ -1,4 +1,5 @@
 import re
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -8,9 +9,11 @@ from core.discord_alert import stream_command_with_alerts
 
 
 def _resolve_httpx_binary():
-    preferred = Path("/home/seclinux/go/bin/httpx")
-    if preferred.exists() and preferred.is_file():
-        return str(preferred)
+    env_bin = os.getenv("RECON_HTTPX_BIN", "").strip()
+    if env_bin:
+        preferred = Path(env_bin)
+        if preferred.exists() and preferred.is_file():
+            return str(preferred)
     return shutil.which("httpx")
 
 
@@ -170,7 +173,7 @@ def run_httpx(input_file, output_file=None, config: dict | None = None):
 
     httpx_bin = _resolve_httpx_binary()
     if not httpx_bin:
-        print("[!] httpx binary not found in PATH or /home/seclinux/go/bin/httpx")
+        print("[!] httpx binary not found in PATH (or RECON_HTTPX_BIN override)")
         live_web_output.touch(exist_ok=True)
         return live_web_output
 

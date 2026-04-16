@@ -25,7 +25,11 @@ def run_spidering(live_web_file, config: dict | None = None):
 
     cmd = ["katana", "-list", str(live_web_file), "-silent", "-o", str(spider_urls_output)]
     cmd.extend(_tool_args(config, "spidering"))
-    subprocess.run(cmd)
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"[!] katana exited with code: {result.returncode}")
+        spider_urls_output.touch(exist_ok=True)
+        return spider_urls_output
 
     if spider_urls_output.exists():
         count = sum(1 for _ in open(spider_urls_output))

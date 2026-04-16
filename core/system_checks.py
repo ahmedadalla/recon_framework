@@ -14,7 +14,7 @@ def verify_dependencies():
     
     if missing:
         print(f"[!] Critical Error: Missing tools in PATH: {', '.join(missing)}")
-        print("[*] Please install them or check your ~/.bashrc paths.")
+        print("[*] Please install them and ensure they are available in your shell PATH (for example via ~/.bashrc, ~/.zshrc, or system profile files).")
         sys.exit(1)
     
     print("[✓] All system dependencies verified.")
