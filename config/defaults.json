@@ -1,0 +1,163 @@
+{
+  "target": "",
+  "execution": {
+    "workers": 5,
+    "httpx_timeout": 600
+  },
+  "pipeline": {
+    "phases": [
+      {
+        "name": "recon",
+        "tools": ["subfinder", "subenum", "oneforall", "crtsh", "puredns", "dnsx_final"],
+        "parallel": true
+      },
+      {
+        "name": "web",
+        "tools": ["httpx", "wayback", "spidering", "url_merge", "gf_patterns"],
+        "parallel": true
+      },
+      {
+        "name": "vuln",
+        "tools": ["nuclei", "nuclei_takeovers", "nuclei_focused", "gf_router", "sqlmap", "dalfox", "crlfuzz", "s3scanner", "port_scan", "nse_scans", "fuzzing", "screenshots"],
+        "parallel": true
+      },
+      {
+        "name": "report",
+        "tools": ["reporting"],
+        "parallel": false
+      }
+    ]
+  },
+  "tools": {
+    "run": {
+      "subfinder": true,
+      "subenum": true,
+      "oneforall": true,
+      "crtsh": true,
+      "puredns": true,
+      "dnsx_final": true,
+      "httpx": true,
+      "wayback": true,
+      "spidering": true,
+      "url_merge": true,
+      "gf_patterns": true,
+      "nuclei": true,
+      "nuclei_takeovers": true,
+      "nuclei_focused": true,
+      "gf_router": true,
+      "sqlmap": true,
+      "port_scan": false,
+      "nse_scans": false,
+      "dalfox": true,
+      "crlfuzz": true,
+      "s3scanner": true,
+      "fuzzing": false,
+      "screenshots": true,
+      "reporting": true
+    },
+    "enabled": [
+      "subfinder",
+      "subenum",
+      "oneforall",
+      "crtsh",
+      "puredns",
+      "dnsx_final",
+      "httpx",
+      "wayback",
+      "spidering",
+      "url_merge",
+      "gf_patterns",
+      "nuclei",
+      "nuclei_takeovers",
+      "nuclei_focused",
+      "gf_router",
+      "sqlmap",
+      "port_scan",
+      "nse_scans",
+      "dalfox",
+      "crlfuzz",
+      "s3scanner",
+      "fuzzing",
+      "screenshots",
+      "reporting"
+    ],
+    "parallel_safe": {
+      "subfinder": true,
+      "subenum": true,
+      "oneforall": true,
+      "crtsh": true,
+      "puredns": false,
+      "dnsx_final": false,
+      "httpx": true,
+      "wayback": true,
+      "spidering": true,
+      "url_merge": false,
+      "gf_patterns": true,
+      "nuclei": true,
+      "nuclei_takeovers": true,
+      "nuclei_focused": true,
+      "gf_router": true,
+      "sqlmap": true,
+      "port_scan": false,
+      "nse_scans": false,
+      "dalfox": true,
+      "crlfuzz": true,
+      "s3scanner": true,
+      "fuzzing": false,
+      "screenshots": true,
+      "reporting": false
+    },
+    "tool_args": {
+      "subfinder": [],
+      "subenum": [],
+      "oneforall": [],
+      "crtsh": [],
+      "puredns": [],
+      "dnsx_final": [],
+      "httpx": ["-threads", "80", "-retries", "2"],
+      "wayback": [],
+      "spidering": ["-c", "10"],
+      "url_merge": [],
+      "gf_patterns": [],
+      "nuclei": ["-rl", "150", "-retries", "1"],
+      "nuclei_takeovers": ["-rl", "100", "-retries", "1"],
+      "nuclei_focused": ["-rl", "100", "-retries", "1"],
+      "gf_router": [],
+      "sqlmap": ["--random-agent", "--threads=10", "--level=4", "--risk=3", "--parse-errors"],
+      "dalfox": ["--silence", "--format", "jsonl", "--only-poc", "v", "--no-spinner", "--no-color"],
+      "crlfuzz": ["-s"],
+      "s3scanner": ["-json"],
+      "fuzzing": ["-t", "50", "-timeout", "10"],
+      "screenshots": [],
+      "port_scan": [],
+      "nse_scans": [],
+      "reporting": []
+    }
+  },
+  "fuzzing": {
+    "wordlist": "/home/seclinux/mytools/common.txt"
+  },
+  "nuclei": {
+    "focused_tags": ["xss", "sqli", "lfi", "rce", "ssrf", "redirect", "takeover", "exposure", "cve"]
+  },
+  "pattern_routing": {
+    "sqlmap_enabled": true,
+    "nuclei_tags": {
+      "xss": ["xss", "cve"],
+      "sqli": ["sqli", "sql", "cve"],
+      "ssrf": ["ssrf", "cve"],
+      "redirect": ["redirect", "cve"],
+      "lfi": ["lfi", "cve"],
+      "rce": ["rce", "cve"],
+      "cors": ["cors", "cve"],
+      "urls": ["exposure", "misconfig", "cve"],
+      "takeover": ["takeover"]
+    }
+  },
+  "plugins": {
+    "paths": []
+  },
+  "recon": {
+    "recursive": false
+  }
+}
