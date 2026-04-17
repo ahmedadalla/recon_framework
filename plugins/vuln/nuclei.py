@@ -8,10 +8,26 @@ from core.discord_alert import stream_command_with_alerts
 from core.registry import register_tool
 
 
+ALERTABLE_SEVERITIES = {"MEDIUM", "HIGH", "CRITICAL"}
+SUPPRESSED_NAME_KEYWORDS = {
+    "credentials disclosure check",
+}
+
+
 def _nuclei_alert_parser(record: dict[str, Any]) -> str | None:
     info = record.get("info") or {}
-    severity = str(info.get("severity") or record.get("severity") or "medium").upper()
+    severity = str(info.get("severity") or record.get("severity") or "unknown").upper()
+    if severity not in ALERTABLE_SEVERITIES:
+        return None
+
     name = info.get("name") or record.get("template-id") or record.get("template_id") or "Nuclei finding"
+    normalized_name = str(name).strip().lower()
+    if any(keyword in normalized_name for keyword in SUPPRESSED_NAME_KEYWORDS):
+        return None
+
+    if record.get("matcher-status") is False:
+        return None
+
     matched_at = record.get("matched-at") or record.get("matched_at") or record.get("host") or record.get("template-id")
     if matched_at:
         return f"{severity}: {name} @ {matched_at}"

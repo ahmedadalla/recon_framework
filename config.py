@@ -16,4 +16,6 @@ WORDLIST = os.getenv("RECON_WORDLIST", str(BASE_DIR / "wordlists" / "subdomains-
 RESOLVERS = os.getenv("RECON_RESOLVERS", str(BASE_DIR / "wordlists" / "resolvers.txt"))
 
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
+DISCORD_ALERTS_ENABLED = os.getenv("DISCORD_ALERTS_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
+DISCORD_ALERT_TIMEOUT = float(os.getenv("DISCORD_ALERT_TIMEOUT", "3"))
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")

@@ -95,8 +95,12 @@ def run_gf_routing(gf_dir: Path, config: dict | None = None):
         run_tools = tools_config.get("run", {}) if isinstance(tools_config.get("run", {}), dict) else {}
 
         def _tool_active(name: str) -> bool:
-            if name in enabled_tools:
-                return bool(run_tools.get(name, True))
+            # Honor explicit run toggles first. This prevents false negatives when
+            # a runtime config omits tools.enabled but defines tools.run.
+            if name in run_tools:
+                return bool(run_tools.get(name))
+            if enabled_tools:
+                return name in enabled_tools
             return False
 
         nuclei_already_active = _tool_active("nuclei") or _tool_active("nuclei_focused")

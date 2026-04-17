@@ -1,8 +1,9 @@
-from config import DISCORD_WEBHOOK_URL
+from config import DISCORD_ALERTS_ENABLED, DISCORD_ALERT_TIMEOUT, DISCORD_WEBHOOK_URL
 
 import json
 import os
 import subprocess
+import threading
 from pathlib import Path
 
 try:
@@ -10,15 +11,36 @@ try:
 except ImportError:
     requests = None
 
+
+_alerts_disabled_for_run = False
+_alert_failure_reported = False
+_alert_state_lock = threading.Lock()
+
 def send_alert(title, description, color=0x00ff00):
-    if not DISCORD_WEBHOOK_URL or DISCORD_WEBHOOK_URL == "YOUR_WEBHOOK_HERE" or requests is None:
+    global _alerts_disabled_for_run
+    global _alert_failure_reported
+
+    if _alerts_disabled_for_run:
         return
-    
+
+    if (
+        not DISCORD_ALERTS_ENABLED
+        or not DISCORD_WEBHOOK_URL
+        or DISCORD_WEBHOOK_URL == "YOUR_WEBHOOK_HERE"
+        or requests is None
+    ):
+        return
+
     data = {"embeds": [{"title": title, "description": description, "color": color}]}
     try:
-        requests.post(DISCORD_WEBHOOK_URL, json=data, timeout=10)
+        response = requests.post(DISCORD_WEBHOOK_URL, json=data, timeout=(1.5, max(1.5, DISCORD_ALERT_TIMEOUT)))
+        response.raise_for_status()
     except Exception as e:
-        print(f"[!] Failed to send Discord alert: {e}")
+        with _alert_state_lock:
+            _alerts_disabled_for_run = True
+            if not _alert_failure_reported:
+                _alert_failure_reported = True
+                print(f"[!] Discord alerts disabled for this run after first failure ({type(e).__name__}).")
 
 
 def stream_command_with_alerts(
