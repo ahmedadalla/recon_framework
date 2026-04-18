@@ -1,10 +1,24 @@
 import os
+import re
 from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent
 RESULTS_DIR = BASE_DIR / "results"
 TEMP_DIR = RESULTS_DIR / "tmp"
+
+
+def _sanitize_target_name(target: str) -> str:
+	name = target.strip().lower()
+	return re.sub(r"[^a-z0-9._-]+", "_", name) or "default"
+
+
+def domain_results_dir(target: str) -> Path:
+	return RESULTS_DIR / _sanitize_target_name(target)
+
+
+def domain_temp_dir(target: str) -> Path:
+	return TEMP_DIR / _sanitize_target_name(target)
 
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 TEMP_DIR.mkdir(parents=True, exist_ok=True)

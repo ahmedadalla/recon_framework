@@ -6,6 +6,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
+from config import domain_results_dir, domain_temp_dir
+
 
 class Phase(StrEnum):
     RECON = "recon"
@@ -39,6 +41,18 @@ class RunContext:
     config: dict[str, Any]
     artifacts: dict[str, Artifact] = field(default_factory=dict)
     data: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def results_dir(self) -> Path:
+        path = domain_results_dir(self.target)
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    @property
+    def temp_dir(self) -> Path:
+        path = domain_temp_dir(self.target)
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
     def publish(self, artifact: Artifact) -> None:
         self.artifacts[artifact.key] = artifact

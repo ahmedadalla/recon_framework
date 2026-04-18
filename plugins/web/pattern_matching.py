@@ -13,6 +13,6 @@ class PatternMatchingPlugin(ToolPlugin):
     produces = ("gf_patterns_dir",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        output = run_gf_patterns(ctx.get_path("clean_endpoints"), ctx.config)
+        output = run_gf_patterns(ctx.get_path("clean_endpoints"), ctx.config, results_dir=ctx.results_dir)
         artifact = Artifact(key="gf_patterns_dir", path=output, kind="directory")
         return ToolResult(tool=self.name, phase=self.phase, success=True, artifacts=[artifact], message=str(output))

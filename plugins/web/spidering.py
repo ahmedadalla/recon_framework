@@ -13,6 +13,6 @@ class SpideringPlugin(ToolPlugin):
     produces = ("spider_urls",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        output = run_spidering(ctx.get_path("live_web_apps"), ctx.config)
+        output = run_spidering(ctx.get_path("live_web_apps"), ctx.config, temp_dir=ctx.temp_dir)
         artifact = Artifact(key="spider_urls", path=output)
         return ToolResult(tool=self.name, phase=self.phase, success=True, artifacts=[artifact], message=str(output))

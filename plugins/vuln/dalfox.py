@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 
-from config import RESULTS_DIR
 from core.contracts import Artifact, Phase, RunContext, ToolPlugin, ToolResult
 from core.discord_alert import stream_command_with_alerts
 from core.registry import register_tool
@@ -17,7 +16,7 @@ class DalfoxPlugin(ToolPlugin):
 
     def run(self, ctx: RunContext) -> ToolResult:
         xss_file = ctx.get_path("gf_patterns_dir") / "xss.txt"
-        vuln_dir = RESULTS_DIR / "vulnerabilities"
+        vuln_dir = ctx.results_dir / "vulnerabilities"
         vuln_dir.mkdir(parents=True, exist_ok=True)
         output = vuln_dir / "dalfox_results.txt"
         if xss_file.exists() and xss_file.stat().st_size > 0:

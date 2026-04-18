@@ -13,6 +13,6 @@ class ScreenshotsPlugin(ToolPlugin):
     produces = ("screenshots_dir",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        output = run_screenshots(ctx.get_path("live_web_apps"), ctx.config)
+        output = run_screenshots(ctx.get_path("live_web_apps"), ctx.config, results_dir=ctx.results_dir)
         artifact = Artifact(key="screenshots_dir", path=output, kind="directory")
         return ToolResult(tool=self.name, phase=self.phase, success=True, artifacts=[artifact], message=str(output))

@@ -27,9 +27,11 @@ def _tool_args(config: dict | None, tool_name: str) -> list[str]:
     return [str(item) for item in value]
 
 
-def run_port_scan(input_file, config: dict | None = None):
+def run_port_scan(input_file, config: dict | None = None, results_dir: Path | None = None):
     print("\n[+] Running Port Scan (nmap)...")
-    ports_output = RESULTS_DIR / "open_ports.txt"
+    results_root = Path(results_dir) if results_dir is not None else RESULTS_DIR
+    ports_output = results_root / "open_ports.txt"
+    ports_output.parent.mkdir(parents=True, exist_ok=True)
 
     if not input_file.exists() or input_file.stat().st_size == 0:
         print("[!] No resolved subdomains found. Skipping nmap scan.")
@@ -96,9 +98,16 @@ def run_port_scan(input_file, config: dict | None = None):
     return ports_output
 
 
-def run_nse_scans(input_file, config: dict | None = None):
+def run_nse_scans(
+    input_file,
+    config: dict | None = None,
+    results_dir: Path | None = None,
+    temp_dir: Path | None = None,
+):
     print("\n[+] Running NSE Script Scan (nmap --script vuln)...")
-    nse_output = RESULTS_DIR / "vulnerabilities" / "nse_results.txt"
+    results_root = Path(results_dir) if results_dir is not None else RESULTS_DIR
+    temp_root = Path(temp_dir) if temp_dir is not None else TEMP_DIR
+    nse_output = results_root / "vulnerabilities" / "nse_results.txt"
     nse_output.parent.mkdir(parents=True, exist_ok=True)
 
     if not input_file.exists() or input_file.stat().st_size == 0:
@@ -127,7 +136,8 @@ def run_nse_scans(input_file, config: dict | None = None):
         nse_output.touch(exist_ok=True)
         return nse_output
 
-    target_file = TEMP_DIR / "nse_targets.txt"
+    target_file = temp_root / "nse_targets.txt"
+    target_file.parent.mkdir(parents=True, exist_ok=True)
     target_file.write_text("\n".join(unique_targets) + "\n")
 
     cmd = [
@@ -165,9 +175,15 @@ def run_nse_scans(input_file, config: dict | None = None):
 
     return nse_output
 
-def run_httpx(input_file, output_file=None, config: dict | None = None):
+def run_httpx(
+    input_file,
+    output_file=None,
+    config: dict | None = None,
+    results_dir: Path | None = None,
+):
     print("\n[+] Probing live web apps (httpx)...")
-    live_web_output = output_file or RESULTS_DIR / "live_web_apps.txt"
+    results_root = Path(results_dir) if results_dir is not None else RESULTS_DIR
+    live_web_output = output_file or results_root / "live_web_apps.txt"
     live_web_output = Path(live_web_output)
     live_web_output.parent.mkdir(parents=True, exist_ok=True)
 

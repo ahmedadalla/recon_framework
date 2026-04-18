@@ -14,6 +14,6 @@ class UrlMergePlugin(ToolPlugin):
     parallel_safe = False
 
     def run(self, ctx: RunContext) -> ToolResult:
-        output = run_url_merge(ctx.get_path("raw_urls"), ctx.get_path("spider_urls"), ctx.config)
+        output = run_url_merge(ctx.get_path("raw_urls"), ctx.get_path("spider_urls"), ctx.config, results_dir=ctx.results_dir)
         artifact = Artifact(key="clean_endpoints", path=output)
         return ToolResult(tool=self.name, phase=self.phase, success=True, artifacts=[artifact], message=str(output))

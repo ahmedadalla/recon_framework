@@ -14,6 +14,6 @@ class HttpxPlugin(ToolPlugin):
 
     def run(self, ctx: RunContext) -> ToolResult:
         resolved = ctx.get_path("resolved_subdomains")
-        output = run_httpx(resolved, config=ctx.config)
+        output = run_httpx(resolved, config=ctx.config, results_dir=ctx.results_dir)
         artifact = Artifact(key="live_web_apps", path=output)
         return ToolResult(tool=self.name, phase=self.phase, success=True, artifacts=[artifact], message=str(output))

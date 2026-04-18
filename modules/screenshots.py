@@ -15,9 +15,10 @@ def _tool_args(config: dict | None, tool_name: str) -> list[str]:
     return [str(item) for item in value]
 
 
-def run_screenshots(live_web_file, config: dict | None = None):
+def run_screenshots(live_web_file, config: dict | None = None, results_dir: Path | None = None):
     print("\n[+] Gathering Screenshots (gowitness)...")
-    screenshots_dir = RESULTS_DIR / "screenshots"
+    results_root = Path(results_dir) if results_dir is not None else RESULTS_DIR
+    screenshots_dir = results_root / "screenshots"
     screenshots_dir.mkdir(exist_ok=True)
 
     if not Path(live_web_file).exists() or Path(live_web_file).stat().st_size == 0:

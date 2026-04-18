@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import subprocess
 
-from config import TEMP_DIR
 from core.contracts import Artifact, Phase, RunContext, ToolPlugin, ToolResult
 from core.registry import register_tool
 
@@ -14,7 +13,7 @@ class CrtshPlugin(ToolPlugin):
     produces = ("crtsh_subdomains",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        output = TEMP_DIR / "cert_sh.txt"
+        output = ctx.temp_dir / "cert_sh.txt"
         try:
             import requests
             response = requests.get(f"https://crt.sh/?q=%25.{ctx.target}&output=json", headers={"User-Agent": "Mozilla/5.0"}, timeout=15)

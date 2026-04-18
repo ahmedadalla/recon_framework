@@ -14,9 +14,10 @@ def _tool_args(config: dict | None, tool_name: str) -> list[str]:
     return [str(item) for item in value]
 
 
-def run_gf_patterns(clean_endpoints, config: dict | None = None):
+def run_gf_patterns(clean_endpoints, config: dict | None = None, results_dir: Path | None = None):
     print("\n[=== PHASE 4: GF PATTERN MATCHING ===]")
-    gf_dir = RESULTS_DIR / "gf_patterns"
+    results_root = Path(results_dir) if results_dir is not None else RESULTS_DIR
+    gf_dir = results_root / "gf_patterns"
     gf_dir.mkdir(exist_ok=True)
 
     if not Path(clean_endpoints).exists() or Path(clean_endpoints).stat().st_size == 0:

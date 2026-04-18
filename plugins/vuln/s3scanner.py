@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from config import RESULTS_DIR
 from core.contracts import Artifact, Phase, RunContext, ToolPlugin, ToolResult
 from core.discord_alert import stream_command_with_alerts
 from core.registry import register_tool
@@ -15,7 +14,7 @@ class S3ScannerPlugin(ToolPlugin):
     produces = ("s3_results",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        vuln_dir = RESULTS_DIR / "vulnerabilities"
+        vuln_dir = ctx.results_dir / "vulnerabilities"
         vuln_dir.mkdir(parents=True, exist_ok=True)
         output = vuln_dir / "s3_results.txt"
         bucket_file = build_bucket_file(ctx.get_path("clean_endpoints"), vuln_dir / "s3_buckets.txt")

@@ -13,6 +13,6 @@ class NseScansPlugin(ToolPlugin):
     produces = ("nse_results",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        output = run_nse_scans(ctx.get_path("open_ports"), ctx.config)
+        output = run_nse_scans(ctx.get_path("open_ports"), ctx.config, results_dir=ctx.results_dir, temp_dir=ctx.temp_dir)
         artifact = Artifact(key="nse_results", path=output)
         return ToolResult(tool=self.name, phase=self.phase, success=True, artifacts=[artifact], message=str(output))

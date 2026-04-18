@@ -3,7 +3,7 @@ import logging
 import shutil
 from pathlib import Path
 
-from config import DEFAULT_PIPELINE_CONFIG, TEMP_DIR
+from config import DEFAULT_PIPELINE_CONFIG
 from core.config_loader import load_config
 from core.orchestrator import Orchestrator, build_context
 from core.system_checks import verify_dependencies
@@ -50,7 +50,7 @@ def main():
     results = orchestrator.run(ctx)
 
     print("\n[+] Cleaning temporary files...")
-    shutil.rmtree(TEMP_DIR, ignore_errors=True)
+    shutil.rmtree(ctx.temp_dir, ignore_errors=True)
     
     print(f"\n[=========== RECON COMPLETE ===========]")
     for key in ["resolved_subdomains", "live_web_apps", "raw_urls", "clean_endpoints", "gf_patterns_dir", "screenshots_dir", "fuzzing_dir", "final_report"]:

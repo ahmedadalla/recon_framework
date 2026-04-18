@@ -6,7 +6,7 @@ import logging
 import shutil
 from pathlib import Path
 
-from config import DEFAULT_PIPELINE_CONFIG, TEMP_DIR, RESULTS_DIR
+from config import DEFAULT_PIPELINE_CONFIG
 from core.config_loader import load_config
 from core.contracts import Artifact, Phase
 from core.orchestrator import Orchestrator, build_context
@@ -72,7 +72,7 @@ def main():
     print(f"\n[=========== VULN PHASE COMPLETE ===========]")
     print(f"[✓] Tool Results: {len(results)}")
     
-    vuln_dir = RESULTS_DIR / "vulnerabilities"
+    vuln_dir = ctx.results_dir / "vulnerabilities"
     if vuln_dir.exists():
         print(f"\n[+] Vulnerability results:")
         for result_file in sorted(vuln_dir.glob("*.txt")):

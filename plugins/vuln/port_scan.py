@@ -13,6 +13,6 @@ class PortScanPlugin(ToolPlugin):
     produces = ("open_ports",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        output = run_port_scan(ctx.get_path("resolved_subdomains"), ctx.config)
+        output = run_port_scan(ctx.get_path("resolved_subdomains"), ctx.config, results_dir=ctx.results_dir)
         artifact = Artifact(key="open_ports", path=output)
         return ToolResult(tool=self.name, phase=self.phase, success=True, artifacts=[artifact], message=str(output))

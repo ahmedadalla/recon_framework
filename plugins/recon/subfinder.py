@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import subprocess
 
-from config import TEMP_DIR
 from core.contracts import Artifact, Phase, RunContext, ToolPlugin, ToolResult
 from core.registry import register_tool
 
@@ -14,7 +13,7 @@ class SubfinderPlugin(ToolPlugin):
     produces = ("subfinder_subdomains",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        output = TEMP_DIR / f"{ctx.target}_subfinder.txt"
+        output = ctx.temp_dir / f"{ctx.target}_subfinder.txt"
         cmd = ["subfinder", "-d", ctx.target, "-o", str(output)]
         tool_args = ctx.config.get("tools", {}).get("tool_args", ctx.config.get("tool_args", {}))
         extra = tool_args.get(self.name, []) if isinstance(tool_args, dict) else []

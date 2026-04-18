@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from config import RESULTS_DIR, GEMINI_API_KEY
+from config import GEMINI_API_KEY
 from core.discord_alert import send_alert
 
 try:
@@ -47,9 +47,12 @@ def generate_gemini_summary(raw_findings):
     except Exception as e:
         return f"Error generating AI summary: {e}"
 
-def run_reporting(vuln_dir, target_domain):
+def run_reporting(results_dir, target_domain):
     print("\n[=== PHASE 6: REPORT GENERATION ===]")
     print("[+] Gathering vulnerability data...")
+
+    results_root = Path(results_dir)
+    vuln_dir = results_root / "vulnerabilities"
     
     # 1. Read Vulnerability Data
     raw_text = ""
@@ -64,7 +67,7 @@ def run_reporting(vuln_dir, target_domain):
             with open(nuclei_file, "r") as f:
                 raw_text += f"--- Nuclei Findings ({nuclei_file.name}) ---\n" + f.read() + "\n"
 
-    open_ports_file = RESULTS_DIR / "open_ports.txt"
+    open_ports_file = results_root / "open_ports.txt"
     if open_ports_file.exists():
         with open(open_ports_file, "r") as f:
             raw_text += "--- Open Ports ---\n" + f.read() + "\n"
@@ -110,7 +113,7 @@ def run_reporting(vuln_dir, target_domain):
     # 3. Build PDF (or fallback text report if FPDF is unavailable)
     print("[+] Compiling PDF Report...")
     if FPDF is None:
-        txt_report = RESULTS_DIR / f"{target_domain}_Recon_Report.txt"
+        txt_report = results_root / f"{target_domain}_Recon_Report.txt"
         with open(txt_report, "w") as f:
             f.write(f"Security Reconnaissance Report: {target_domain}\n")
             f.write("=" * 70 + "\n\n")
@@ -128,7 +131,7 @@ def run_reporting(vuln_dir, target_domain):
         send_alert("Report Generated (TXT Fallback)", f"Reconnaissance complete! Report saved to {txt_report}", 0x3498db)
         return txt_report
 
-    pdf_path = RESULTS_DIR / f"{target_domain}_Recon_Report.pdf"
+    pdf_path = results_root / f"{target_domain}_Recon_Report.pdf"
     
     pdf = FPDF()
     pdf.add_page()

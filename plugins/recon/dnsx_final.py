@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import subprocess
 
-from config import RESULTS_DIR, TEMP_DIR
 from core.contracts import Artifact, Phase, RunContext, ToolPlugin, ToolResult
 from core.registry import register_tool
 
@@ -15,14 +14,14 @@ class DnsxFinalPlugin(ToolPlugin):
     produces = ("resolved_subdomains",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        master = RESULTS_DIR / "master_subdomains.txt"
+        master = ctx.results_dir / "master_subdomains.txt"
         merged: set[str] = set()
         for key in self.requires:
             path = ctx.get_path(key)
             if path.exists():
                 merged.update(line.strip() for line in path.read_text().splitlines() if line.strip())
         master.write_text("\n".join(sorted(merged)) + ("\n" if merged else ""), encoding="utf-8")
-        output = RESULTS_DIR / "final_resolved_subdomains.txt"
+        output = ctx.results_dir / "final_resolved_subdomains.txt"
         cmd = ["dnsx", "-l", str(master), "-silent", "-o", str(output)]
         tool_args = ctx.config.get("tools", {}).get("tool_args", ctx.config.get("tool_args", {}))
         extra = tool_args.get(self.name, []) if isinstance(tool_args, dict) else []

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from config import RESULTS_DIR
 from core.contracts import Artifact, Phase, RunContext, ToolPlugin, ToolResult
 from core.discord_alert import stream_command_with_alerts
 from core.registry import register_tool
@@ -42,7 +41,7 @@ class NucleiPlugin(ToolPlugin):
     produces = ("nuclei_hosts_results",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        vuln_dir = RESULTS_DIR / "vulnerabilities"
+        vuln_dir = ctx.results_dir / "vulnerabilities"
         vuln_dir.mkdir(parents=True, exist_ok=True)
         output = vuln_dir / "nuclei_hosts_results.txt"
         cmd = ["nuclei", "-l", str(ctx.get_path("live_web_apps")), "-jsonl", "-silent"]
@@ -69,7 +68,7 @@ class NucleiFocusedPlugin(ToolPlugin):
     produces = ("nuclei_focused_results",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        vuln_dir = RESULTS_DIR / "vulnerabilities"
+        vuln_dir = ctx.results_dir / "vulnerabilities"
         vuln_dir.mkdir(parents=True, exist_ok=True)
         output = vuln_dir / "nuclei_focused_results.txt"
 
@@ -106,7 +105,7 @@ class NucleiTakeoversPlugin(ToolPlugin):
     produces = ("nuclei_takeovers_results",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        vuln_dir = RESULTS_DIR / "vulnerabilities"
+        vuln_dir = ctx.results_dir / "vulnerabilities"
         vuln_dir.mkdir(parents=True, exist_ok=True)
         output = vuln_dir / "nuclei_takeovers_results.txt"
 

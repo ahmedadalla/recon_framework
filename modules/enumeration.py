@@ -1,6 +1,7 @@
 import subprocess
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from config import TEMP_DIR, RESULTS_DIR, WORDLIST, RESOLVERS
 from core.discord_alert import send_alert
 
@@ -10,11 +11,12 @@ except ImportError:
     requests = None
 
 # 🔹 Build passive commands
-def build_commands(domain):
+def build_commands(domain, temp_dir: Path | None = None):
+    temp_root = Path(temp_dir) if temp_dir is not None else TEMP_DIR
     return {
-        "subfinder": ["subfinder", "-d", domain, "-o", str(TEMP_DIR / f"{domain}_subfinder.txt")],
-        "subenum": ["subenum", "-d", domain, "-o", str(TEMP_DIR / f"{domain}_subenum.txt")],
-        "oneforall": ["oneforall", "--target", domain, "--path", f'{str(TEMP_DIR)}', "--fmt", "json", "run"]
+        "subfinder": ["subfinder", "-d", domain, "-o", str(temp_root / f"{domain}_subfinder.txt")],
+        "subenum": ["subenum", "-d", domain, "-o", str(temp_root / f"{domain}_subenum.txt")],
+        "oneforall": ["oneforall", "--target", domain, "--path", f'{str(temp_root)}', "--fmt", "json", "run"]
     }
 
 def run_tool(task): 
@@ -55,9 +57,10 @@ def get_subdomains(domain, exclude_www=False):
         return []
 
 # 🔹 Active: Puredns Bruteforce
-def run_puredns(target, wordlist):
+def run_puredns(target, wordlist, temp_dir: Path | None = None):
     print(f"[+] Active DNS Bruteforce (puredns) started on {target}...")
-    output_txt = TEMP_DIR / f"{target}_puredns.txt"
+    temp_root = Path(temp_dir) if temp_dir is not None else TEMP_DIR
+    output_txt = temp_root / f"{target}_puredns.txt"
     cmd = [
         "puredns", "bruteforce", wordlist, target,
         "-r", RESOLVERS,
@@ -71,9 +74,10 @@ def run_puredns(target, wordlist):
     print(f"[✓] puredns done for {target}")
 
 # 🔹 Active: Permutations (dnsgen + puredns)
-def run_permutations(input_file):
+def run_permutations(input_file, temp_dir: Path | None = None):
     print("\n[+] Generating & resolving permutations (dnsgen + puredns)...")
-    perm_output = TEMP_DIR / "permutations_resolved.txt"
+    temp_root = Path(temp_dir) if temp_dir is not None else TEMP_DIR
+    perm_output = temp_root / "permutations_resolved.txt"
     cmd = f"dnsgen {input_file} | puredns resolve -r {RESOLVERS} -w {perm_output} --quiet"
     try:
         subprocess.run(cmd, shell=True, stderr=subprocess.DEVNULL, timeout=1200)
@@ -83,12 +87,15 @@ def run_permutations(input_file):
 
 
 # 🔹 THIS IS THE MAIN FUNCTION CALLED BY main.py
-def run_subdomain_enum(domain, recursive=False, max_workers=5):
+def run_subdomain_enum(domain, recursive=False, max_workers=5, temp_dir: Path | None = None, results_dir: Path | None = None):
     print(f"\n[=== PHASE 1: SUBDOMAIN ENUMERATION for {domain} ===]")
-    master_subs_file = RESULTS_DIR / "master_subdomains.txt"
+    temp_root = Path(temp_dir) if temp_dir is not None else TEMP_DIR
+    results_root = Path(results_dir) if results_dir is not None else RESULTS_DIR
+    master_subs_file = results_root / "master_subdomains.txt"
+    master_subs_file.parent.mkdir(parents=True, exist_ok=True)
 
     tasks = []
-    for name, cmd in build_commands(domain).items():
+    for name, cmd in build_commands(domain, temp_root).items():
         tasks.append((domain, name, cmd))
 
     # --- 1. PASSIVE GATHERING ---
@@ -99,13 +106,13 @@ def run_subdomain_enum(domain, recursive=False, max_workers=5):
         for future in as_completed(futures):
             res = future.result()
             if res["tool"] == "oneforall":
-                json_file = TEMP_DIR / f"{res['domain']}.json"
+                json_file = temp_root / f"{res['domain']}.json"
                 if json_file.exists():
                     try:
                         with open(json_file, "r") as f:
                             data = json.load(f)
                         subdomains = set([entry.get("subdomain") for entry in data if entry.get("subdomain")])
-                        with open(TEMP_DIR / f"{res['domain']}_oneforall.txt", "w") as f:
+                        with open(temp_root / f"{res['domain']}_oneforall.txt", "w") as f:
                             for sub in sorted(subdomains): f.write(sub + "\n")
                     except Exception: pass
 
@@ -119,22 +126,22 @@ def run_subdomain_enum(domain, recursive=False, max_workers=5):
         except Exception:
             print(f"[!] crt.sh fetch timed out for {domain}, continuing...")
 
-    with open(TEMP_DIR / "cert_sh.txt", "w") as f:
+    with open(temp_root / "cert_sh.txt", "w") as f:
         for sub in crt_subdomains:
             f.write(sub + "\n")
 
     # Merge passive results into the MASTER list
     print("[+] Merging passive results to master list...")
-    subprocess.run(f"cat {TEMP_DIR}/*.txt | anew {master_subs_file} > /dev/null", shell=True)
+    subprocess.run(f"cat {temp_root}/*.txt | anew {master_subs_file} > /dev/null", shell=True)
 
     # --- 2. ACTIVE DNS BRUTEFORCING ---
     print("\n[+] Running Active Bruteforcing...")
-    run_puredns(domain, WORDLIST)
-    subprocess.run(f"cat {TEMP_DIR}/*_puredns.txt | anew {master_subs_file} > /dev/null 2>&1", shell=True)
+    run_puredns(domain, WORDLIST, temp_root)
+    subprocess.run(f"cat {temp_root}/*_puredns.txt | anew {master_subs_file} > /dev/null 2>&1", shell=True)
 
     # --- 3. DNS RESOLUTION & PERMUTATIONS ---
     print("\n[+] Running Resolution & Permutations...")
-    resolved_file = TEMP_DIR / "resolved_master.txt"
+    resolved_file = temp_root / "resolved_master.txt"
     subprocess.run(["dnsx", "-l", str(master_subs_file), "-silent", "-o", str(resolved_file)])
 
     #run_permutations(resolved_file)
@@ -151,10 +158,10 @@ def run_subdomain_enum(domain, recursive=False, max_workers=5):
             for future in as_completed(futures):
                 future.result()
         
-        subprocess.run(f"cat {TEMP_DIR}/*_puredns.txt | anew {master_subs_file} > /dev/null 2>&1", shell=True)
+        subprocess.run(f"cat {temp_root}/*_puredns.txt | anew {master_subs_file} > /dev/null 2>&1", shell=True)
 
     # --- FINAL RESOLUTION ---
-    final_resolved = RESULTS_DIR / "final_resolved_subdomains.txt"
+    final_resolved = results_root / "final_resolved_subdomains.txt"
     subprocess.run(["dnsx", "-l", str(master_subs_file), "-silent", "-o", str(final_resolved)])
 
     if final_resolved.exists():

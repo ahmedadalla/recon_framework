@@ -13,6 +13,6 @@ class GfRouterPlugin(ToolPlugin):
     produces = ("gf_routed_dir",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        output = run_gf_routing(ctx.get_path("gf_patterns_dir"), ctx.config)
+        output = run_gf_routing(ctx.get_path("gf_patterns_dir"), ctx.config, results_dir=ctx.results_dir)
         artifact = Artifact(key="gf_routed_dir", path=output, kind="directory")
         return ToolResult(tool=self.name, phase=self.phase, success=True, artifacts=[artifact], message=str(output))

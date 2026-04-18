@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 
-from config import RESOLVERS, TEMP_DIR, WORDLIST
+from config import RESOLVERS, WORDLIST
 from core.contracts import Artifact, Phase, RunContext, ToolPlugin, ToolResult
 from core.registry import register_tool
 
@@ -15,8 +15,8 @@ class PurednsPlugin(ToolPlugin):
     produces = ("puredns_subdomains",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        output = TEMP_DIR / f"{ctx.target}_puredns.txt"
-        input_file = TEMP_DIR / f"{ctx.target}_puredns_input.txt"
+        output = ctx.temp_dir / f"{ctx.target}_puredns.txt"
+        input_file = ctx.temp_dir / f"{ctx.target}_puredns_input.txt"
         merged: set[str] = set()
         for key in self.requires:
             path = ctx.get_path(key)

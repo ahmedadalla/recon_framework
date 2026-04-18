@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import subprocess
 
-from config import TEMP_DIR
 from core.contracts import Artifact, Phase, RunContext, ToolPlugin, ToolResult
 from core.registry import register_tool
 
@@ -15,14 +14,14 @@ class OneForAllPlugin(ToolPlugin):
     produces = ("oneforall_subdomains",)
 
     def run(self, ctx: RunContext) -> ToolResult:
-        cmd = ["oneforall", "--target", ctx.target, "--path", str(TEMP_DIR), "--fmt", "json", "run"]
+        cmd = ["oneforall", "--target", ctx.target, "--path", str(ctx.temp_dir), "--fmt", "json", "run"]
         tool_args = ctx.config.get("tools", {}).get("tool_args", ctx.config.get("tool_args", {}))
         extra = tool_args.get(self.name, []) if isinstance(tool_args, dict) else []
         if isinstance(extra, list):
             cmd.extend(str(item) for item in extra)
         result = subprocess.run(cmd, capture_output=True, text=True)
-        json_file = TEMP_DIR / f"{ctx.target}.json"
-        output = TEMP_DIR / f"{ctx.target}_oneforall.txt"
+        json_file = ctx.temp_dir / f"{ctx.target}.json"
+        output = ctx.temp_dir / f"{ctx.target}_oneforall.txt"
         subdomains: set[str] = set()
         parse_error = ""
         if json_file.exists():

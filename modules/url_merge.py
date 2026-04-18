@@ -15,9 +15,10 @@ def _tool_args(config: dict | None, tool_name: str) -> list[str]:
     return [str(item) for item in value]
 
 
-def run_url_merge(raw_urls_file, spider_urls_file, config: dict | None = None):
+def run_url_merge(raw_urls_file, spider_urls_file, config: dict | None = None, results_dir: Path | None = None):
     print("\n[+] Merging wayback and spider URLs...")
-    clean_urls_output = RESULTS_DIR / "clean_endpoints.txt"
+    results_root = Path(results_dir) if results_dir is not None else RESULTS_DIR
+    clean_urls_output = results_root / "clean_endpoints.txt"
     clean_urls_output.parent.mkdir(parents=True, exist_ok=True)
 
     inputs = []

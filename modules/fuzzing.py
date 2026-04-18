@@ -16,9 +16,10 @@ def _tool_args(config: dict | None, tool_name: str) -> list[str]:
     return [str(item) for item in value]
 
 
-def run_fuzzing(live_web_file, config: dict | None = None):
+def run_fuzzing(live_web_file, config: dict | None = None, results_dir: Path | None = None):
     print("\n[+] Starting Directory Fuzzing (ffuf)...")
-    fuzzing_dir = RESULTS_DIR / "fuzzing"
+    results_root = Path(results_dir) if results_dir is not None else RESULTS_DIR
+    fuzzing_dir = results_root / "fuzzing"
     fuzzing_dir.mkdir(exist_ok=True)
     
     wordlist = "/home/seclinux/mytools/common.txt"

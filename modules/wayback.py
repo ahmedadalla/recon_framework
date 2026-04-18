@@ -1,5 +1,6 @@
 import shutil
 import subprocess
+from pathlib import Path
 
 from config import TEMP_DIR
 from core.discord_alert import send_alert
@@ -15,9 +16,10 @@ def _tool_args(config: dict | None, tool_name: str) -> list[str]:
     return [str(item) for item in value]
 
 
-def run_wayback_gathering(live_web_file, config: dict | None = None):
+def run_wayback_gathering(live_web_file, config: dict | None = None, temp_dir: Path | None = None):
     print("\n[+] Gathering archived URLs (waybackurls)...")
-    raw_urls_output = TEMP_DIR / "raw_urls.txt"
+    temp_root = Path(temp_dir) if temp_dir is not None else TEMP_DIR
+    raw_urls_output = temp_root / "raw_urls.txt"
     raw_urls_output.parent.mkdir(parents=True, exist_ok=True)
 
     if not live_web_file.exists() or live_web_file.stat().st_size == 0:

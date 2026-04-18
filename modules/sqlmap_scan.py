@@ -1,5 +1,6 @@
 import re
 import shutil
+from pathlib import Path
 
 from core.discord_alert import stream_command_with_alerts
 
@@ -29,20 +30,37 @@ def run_sqlmap(sqli_input, output_file, config: dict | None = None):
 
     sqlmap_output_dir = output_file.parent / "sqlmap_output"
     sqlmap_output_dir.mkdir(parents=True, exist_ok=True)
-    cmd = [sqlmap_bin, "-m", str(sqli_input), "--batch", f"--output-dir={sqlmap_output_dir}"]
-    cmd.extend(_tool_args(config, "sqlmap"))
     alert_pattern = re.compile(r"(?i)(appears to be|is vulnerable|sql injection|injectable)")
 
-    def _alert_line(line: str) -> str | None:
-        if alert_pattern.search(line):
-            return f"SQLMap finding: {line[:300]}"
-        return None
+    urls = [
+        line.strip()
+        for line in Path(sqli_input).read_text(encoding="utf-8", errors="ignore").splitlines()
+        if line.strip()
+    ]
+    if not urls:
+        output_file.touch(exist_ok=True)
+        return output_file
 
-    stream_command_with_alerts(
-        cmd,
-        output_file,
-        title="SQLMap Finding",
-        color=0xE74C3C,
-        alert_matcher=_alert_line,
-    )
+    combined_lines: list[str] = []
+    sqlmap_args = _tool_args(config, "sqlmap")
+    for index, url in enumerate(urls, start=1):
+        per_target_output = sqlmap_output_dir / f"{index}.txt"
+        cmd = [sqlmap_bin, "-u", url, "--batch", f"--output-dir={sqlmap_output_dir}", *sqlmap_args]
+
+        def _alert_line(line: str, current_url: str = url) -> str | None:
+            if alert_pattern.search(line):
+                return f"SQLMap finding for {current_url}: {line[:300]}"
+            return None
+
+        stream_command_with_alerts(
+            cmd,
+            per_target_output,
+            title="SQLMap Finding",
+            color=0xE74C3C,
+            alert_matcher=_alert_line,
+        )
+        if per_target_output.exists():
+            combined_lines.append(per_target_output.read_text(encoding="utf-8", errors="ignore"))
+
+    output_file.write_text("".join(combined_lines), encoding="utf-8")
     return output_file
